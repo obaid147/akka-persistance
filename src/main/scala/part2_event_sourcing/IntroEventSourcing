@@ -1,0 +1,180 @@
+Akka persistance:- interacting with a database
+
+
+Persistence is "the continuance of an effect after its cause is removed".
+In the context of storing data in a computer system, this means that the
+data survives after the process with which it was created has ended.
+In other words, for a data store to be considered persistent,
+it must write to non-volatile storage.
+
+
+
+
+Problems with treditional db
+
+How do you query a previous state in the past? /*asking bank for 3 months old statement*/
+how to trace somethig to arrive in the current state?
+
+Examples:-
+	tracing orders in an online store
+	transaction histiry in a bank
+	chat room's like slack
+	document verioning in a Dropbox-like system
+
+
+
+---------------------- EVENT SOURCING ------------------------------
+
+online store:- Asking all the data about an order
+
+Traditional relational model:-
+select * from .......
+
+A much richer description - track all events about the order.
+
+columns:- Date,  price,  Event
+		1-8    $22    create order("BestEreader", 22)
+		2-8    $21    Allocate inventory("BestEreader", 1)
+		3-8    $22    Dispatch order
+		4-8    $22    Deliver order("Success")
+		4-8    $22	   ReturnOrder("package Damaged")
+		4-8    $22    cancelOrder("cutomer request")
+		4-8    $0	   RefundOrder(USD, 22)
+
+
+Instead of storing current state, We will store events like in above example.
+we can always recreate the current state if we wanted by replaying those events.
+
+This new model is called event sourcing, and it will be central to the persistence.
+
+
+
+
+
+-------------------------A new mental model:-
+
+PROS:-
+
+Since all events are appended, We can have huge performance gains during writing because we
+can implement highly efficient append only stores.
+
+The event source model avoids relational databases and object relational mapping ORM completely.
+
+Full trace of everything, annd full audit log ie: how we got to the current state.
+
+Event sourcing Fits the akka actor model perfectly, We can treat each event as message.
+
+
+CONS:-
+
+Querrying is expensive (chapter akka-persistance query)
+
+potential performance issues with Long-Lived entities because the stream of event might be large. (chapter snaphotting)
+
+data model subject to change. as our application evolves.  (schema evolution)
+
+
+
+--------------
+We can create an counterActor that increments the count whenever it receives a message.
+When the actor crashes, we will loose the internal state ie: count...
+We need to persist the internal state of the actor and make sure actors state is stored somewhere such as DB, file....
+Aftter actor fails and restarts, it can start from the position which was stored in db (event).
+
+AKKA uses a very similar idea in akka persistence
+
+Key concept:-
+	Only the change to an actor's state are persisted but never its current state directly. This means we don't actually store
+	the internal state but we store EVENTS from which the internal state can recovered
+--------------
+
+
+
+
+persistent actors so actors can do everything that normal actors can do, that is send
+
+and receive messages, hold and manage internal state and of course, run in massive numbers in parallel.
+
+Now, persistent actors also have some extra capabilities.
+
+First of all, they have what is called a persistance I.D., which identifies this persistent actor
+
+in relationship to the person in store
+for best practice This should be unique every actor.
+
+Secondly, persistent actors can send events to a person store, which is an action that will simply
+
+call persist.
+
+third.A persistent actor is able to recover its state by replaying all the events associated to its persistance I.D
+
+So when a persistent actor handles a message, which we will call a command for the purpose of this
+
+course, aside from its normal capabilities, it can asynchronously persist the event to its persistent store.
+
+And after the event is persisted, it can change its internal state.
+
+
+Now, when a persistent actor starts up or is restarted due to some supervisor strategy, it replays
+
+all the events associated to its persistent side in the same order that were first sent so that the
+
+actor can recover its state as if nothing had happened.
+
+Let me show you with a diagram.
+
+So see, this Blue Dot is an actor which you might remember from the essential Schaus.
+
+The diamond in the middle is the actors receive handler and the list at the bottom is the actor's mailbox.
+
+So assume this geometrical abstraction from now.
+
+
+Let's also assume that we have a persistent store DB which for the purpose of this course, we will call
+
+a journal.
+
+OK, so when a command is dequeued from the mailbox and handled by the actor, the actor can persist
+
+an event to the journal.
+
+This happens asynchronously, and after the Journal has finished, the actor can change its state and
+
+or send messages to other actors.
+
+After that, the command is simply discarded. This happens a bunch of times.
+
+
+A command is handled, an event is persisted, and then the actor might or might not send messages to
+
+other actors and then the command is discarded.
+
+
+Let's now think that we have a journal and a persistent actor is just starting up or has been restarted
+
+as a result of some supervisor strategy.
+
+Now, before handling any commands whatsoever, the actor will automatically query the journal for all
+
+events associated to its persistance I.D.
+
+If the Journal has events for it, they will be replayed to the actor in the same order
+they were persistent and the actor will change its state as a result.
+
+After that, the actor is free to receive further messages.
+
+If an actor receives commands during the recovery phase, there are simply stashed until the recovery
+
+has completed, which I'm going to show you in the code a few lectures from now.
+
+So this is how events, sourcing and persistent actors work...
+
+
+
+
+
+
+
+
+
+
