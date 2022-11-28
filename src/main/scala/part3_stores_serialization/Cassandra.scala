@@ -21,7 +21,7 @@ import com.typesafe.config.ConfigFactory
   *   data in the form of these tombstone's data structures to mark which pieces of data are actually deleted.
 */
 
-object Cassandra {
+object Cassandra extends App {
   val cassandraActorSystem: ActorSystem =
     ActorSystem("cassandraActorSystem", ConfigFactory.load().getConfig("cassandraDemo"))
   val persistentActor: ActorRef =
