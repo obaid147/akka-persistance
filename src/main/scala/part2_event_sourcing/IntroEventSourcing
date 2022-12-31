@@ -156,7 +156,7 @@ as a result of some supervisor strategy.
 
 Now, before handling any commands whatsoever, the actor will automatically query the journal for all
 
-events associated to its persistance I.D.
+events associated to its persistence I.D.
 
 If the Journal has events for it, they will be replayed to the actor in the same order
 they were persistent and the actor will change its state as a result.
