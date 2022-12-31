@@ -94,10 +94,8 @@ object PersistentActors_Extras extends App {
     */
     override def onPersistRejected(cause: Throwable, event: Any, seqNr: Long): Unit = {
       log.error(s"Persist rejected for $event because of $cause")
-      super.onPersistRejected(cause, event,seqNr)
+      super.onPersistRejected(cause, event, seqNr)
     }
-
-
 
   }
 
