@@ -30,7 +30,7 @@ object PersistentActors extends App {
       case Invoice(recipient, date, amount) =>
           /** When you receive a command...
             * 1. Create an event to persist into the store/ send to journal.
-            * 2. Persist the event, then pass in the callback which will get triggered once event is writtern
+            * 2. Persist the event, then pass in the callback which will get triggered once event is written
             * 3. We update actor state when event has persisted.
             * */
         log.info(s"Received invoice for an amount:- $amount")
