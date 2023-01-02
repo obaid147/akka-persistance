@@ -80,7 +80,7 @@ object PersistAsyncDemo extends App {
     * Persisting is an asynchronous operation and sends event to journal, When journal persist the event, call back will fire up.
     * Difference between persist and persistAsync is TIME GAP,
     * In case of persist, Every single message is stashed.
-    * In case of persist, messages are not stashed.
+    * In case of persistAsync, messages are not stashed.
     * TIME GAP is comparatively large*/
 
     /** The time actor spends on executing code is small compare to
